@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Noolithal",
+  "orientation": "portrait",
+  "scope": "/",
+  "short_name": "Noolithal",
+  "start_url": "/",
+  "theme_color": "#95b49d",
+  "id": "com.noolithal.boutique",
+  "description": "Noolithal Boutique Management App"
+}
