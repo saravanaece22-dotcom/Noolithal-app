@@ -75,8 +75,8 @@ async function trackOrder(){
 
   try{
     const snap = await db.collection("orders")
-      .where("orderId","==",orderId)
-      .where("phone","==",phone)
+      .where("invoice","==",orderId)
+      .where("mobile","==",phone)
       .get();
 
     if(snap.empty){
@@ -87,7 +87,7 @@ async function trackOrder(){
     const data = snap.docs[0].data();
 
     document.getElementById("r_order").innerText = data.orderId || "";
-    document.getElementById("r_name").innerText = data.customerName || "";
+    document.getElementById("r_name").innerText = data.name || "";
     document.getElementById("r_payment").innerText = data.paymentStatus || "";
     document.getElementById("r_amount").innerText = data.amount || "";
     document.getElementById("r_date").innerText = data.deliveryDate || "";
