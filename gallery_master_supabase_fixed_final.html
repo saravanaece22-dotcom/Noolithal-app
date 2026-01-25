@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tailor Gallery</title>
+
+<style>
+:root{
+  --green:#8fae9a;
+  --bg:#f4f7f5;
+  --card:#ffffff;
+}
+
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:var(--bg);
+}
+
+header{
+  background:var(--green);
+  color:white;
+  text-align:center;
+  padding:14px;
+  font-size:18px;
+  font-weight:bold;
+}
+
+/* HOME */
+#home{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+  padding:14px;
+}
+
+.category{
+  background:var(--card);
+  border-radius:16px;
+  padding:18px 10px;
+  text-align:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+  cursor:pointer;
+}
+
+.category img{
+  width:50px;
+  margin-bottom:8px;
+}
+
+.category div{
+  font-weight:600;
+  font-size:14px;
+}
+
+/* GALLERY */
+#gallery{
+  display:none;
+  padding:10px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+button{
+  background:var(--green);
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  font-size:14px;
+  cursor:pointer;
+}
+
+.images{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.images img{
+  width:100%;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+/* FULL VIEW */
+#viewer{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  justify-content:center;
+  align-items:center;
+}
+
+#viewer img{
+  width:90%;
+  border-radius:12px;
+}
+
+.icon{
+  font-size:48px;
+  margin-bottom:8px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>Tailor Gallery</header>
+
+<div id="home">
+  <div class="category" onclick="openGallery('Blouse')">
+    <div class="icon">👚</div>
+    <div>Blouse</div>
+  </div>
+  <div class="category" onclick="openGallery('Kurti')">
+    <div class="icon">👗</div>
+    <div>Kurti</div>
+  </div>
+  <div class="category" onclick="openGallery('Churidar')">
+    <div class="icon">👕</div>
+    <div>Churidar</div>
+  </div>
+  <div class="category" onclick="openGallery('Lehanga')">
+    <div class="icon">👰</div>
+    <div>Lehanga</div>
+  </div>
+  <div class="category" onclick="openGallery('Umbrella Frock')">
+    <div class="icon">🩱</div>
+    <div>Umbrella Frock</div>
+  </div>
+  <div class="category" onclick="openGallery('Kids Frock')">
+    <div class="icon">🧒</div>
+    <div>Kids Frock</div>
+  </div>
+  <div class="category" onclick="openGallery('Sleeve Designs')">
+    <div class="icon">✂️</div>
+    <div>Sleeve Designs</div>
+  </div>
+  <div class="category" onclick="openGallery('Neck Designs')">
+    <div class="icon">🧵</div>
+    <div>Neck Designs</div>
+  </div>
+</div>
+
+<div id="Gallery">
+  <div class="topbar">
+    <button onclick="goBack()">← Back</button>
+    <button onclick="openUpload()">⬆ Upload</button>
+  </div>
+
+  <h3 id="title"></h3>
+  <input type="file" id="uploadInput" accept="image/*" multiple style="display:none">
+  <div class="images" id="images"></div>
+</div>
+
+<div id="viewer" onclick="this.style.display='none'">
+  <img id="viewImg">
+</div>
+
+<script>
+let currentCategory = "";
+const galleryData = {};
+
+function openGallery(name){
+  currentCategory = name;
+  if(!galleryData[name]) galleryData[name] = [];
+  document.getElementById("home").style.display="none";
+  document.getElementById("Gallery").style.display="block";
+  document.getElementById("title").innerText=name;
+  renderImages();
+}
+
+function goBack(){
+  document.getElementById("Gallery").style.display="none";
+  document.getElementById("home").style.display="grid";
+}
+
+function openUpload(){
+  document.getElementById("uploadInput").click();
+}
+
+document.getElementById("uploadInput").addEventListener("change", function(e){
+  const files = Array.from(e.target.files);
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      galleryData[currentCategory].push(reader.result);
+      renderImages();
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+function renderImages(){
+  const box = document.getElementById("images");
+  box.innerHTML="";
+  galleryData[currentCategory].forEach((src,index)=>{
+    const img=document.createElement("img");
+    img.src=src;
+    img.onclick=()=>show(src);
+    addLongPress(img,index);
+    box.appendChild(img);
+  });
+}
+
+
+function addLongPress(img, index){
+  let timer = null;
+  img.addEventListener("touchstart", ()=>{
+    timer = setTimeout(()=>{
+      if(confirm("Delete this image?")){
+        galleryData[currentCategory].splice(index,1);
+        renderImages();
+      }
+    },600);
+  });
+  img.addEventListener("touchend", ()=> clearTimeout(timer));
+  img.addEventListener("touchmove", ()=> clearTimeout(timer));
+}
+
+function show(src){
+  document.getElementById("viewImg").src=src;
+  document.getElementById("viewer").style.display="flex";
+}
+</script>
+
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = "https://pbfldzbhudctbdzmadyq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZmxkemJodWRjdGJkem1hZHlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMDIxNDcsImV4cCI6MjA4NDg3ODE0N30.PsT8Ktj7qs9p3kzkQ7e92T-loPDqht4eleTmt_Loxwg";
+const BUCKET = "GALLERY";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Override upload handler
+document.getElementById("uploadInput").onchange = async function(e){
+  const files = Array.from(e.target.files);
+  for(const file of files){
+    const path = currentCategory + "/" + Date.now() + "_" + file.name;
+    
+const { data, error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
+if(error){
+  alert("Upload failed: " + error.message);
+  console.error(error);
+  return;
+}else{
+  console.log("Uploaded:", data);
+}
+
+  }
+  renderImages();
+};
+
+// Override renderImages to load from Supabase
+async function renderImages(){
+  const box = document.getElementById("images");
+  box.innerHTML="";
+
+  const result = await supabase.storage.from(BUCKET).list(currentCategory);
+  if(result.error){ console.log(result.error); return; }
+
+  result.data.forEach(file=>{
+    const fullPath = currentCategory + "/" + file.name;
+    const url = supabase.storage.from(BUCKET).getPublicUrl(fullPath).data.publicUrl;
+
+    const img = document.createElement("img");
+    img.src = url;
+    img.onclick = ()=>show(url);
+    addLongPress(img, fullPath);
+    box.appendChild(img);
+  });
+}
+
+// Override long press delete to delete from cloud
+function addLongPress(img, filePath){
+  let timer = null;
+  img.addEventListener("touchstart", ()=>{
+    timer = setTimeout(async ()=>{
+      if(confirm("Delete this image?")){
+        await supabase.storage.from(BUCKET).remove([filePath]);
+        renderImages();
+      }
+    },600);
+  });
+  img.addEventListener("touchend", ()=> clearTimeout(timer));
+  img.addEventListener("touchmove", ()=> clearTimeout(timer));
+}
+</script>
+
+</body>
+</html>
