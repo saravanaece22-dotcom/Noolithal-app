@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tailor Gallery (Supabase Cloud)</title>
+<style>
+body{font-family:sans-serif;margin:0;background:#f4f6f4}
+header{background:#9db6a3;color:#fff;padding:12px;text-align:center;font-size:22px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;padding:15px}
+.card{background:#fff;border-radius:12px;padding:20px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.1);cursor:pointer}
+.gallery img{width:100%;border-radius:10px;margin-bottom:10px}
+button{background:#9db6a3;color:#fff;border:none;padding:10px 15px;border-radius:8px;font-size:16px}
+.topbar{display:flex;justify-content:space-between;padding:10px}
+</style>
+</head>
+<body>
+
+<header>Tailor Gallery</header>
+
+<div id="home" class="grid"></div>
+
+<div id="page" style="display:none">
+  <div class="topbar">
+    <button onclick="back()">← Back</button>
+    <button onclick="pick()">↑ Upload</button>
+  </div>
+  <h2 id="title" style="padding-left:15px"></h2>
+  <div id="gallery" class="gallery grid"></div>
+</div>
+
+<input type="file" id="file" hidden>
+
+<script>
+const SUPABASE_URL="https://pbfldzbhudctbdzmadyq.supabase.co";
+const BUCKET="Gallery";
+const API_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZmxkemJodWRjdGJkem1hZHlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMDIxNDcsImV4cCI6MjA4NDg3ODE0N30.PsT8Ktj7qs9p3kzkQ7e92T-loPDqht4eleTmt_Loxwg";
+
+const cats=["Blouse","Kurti","Churidar","Lehanga","Umbrella Frock","Kids Frock","Sleeve Designs","Neck Designs"];
+let current="";
+
+function home(){
+  const h=document.getElementById("home");
+  h.innerHTML="";
+  cats.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="card";
+    d.innerHTML="<b>"+c+"</b>";
+    d.onclick=()=>openCat(c);
+    h.appendChild(d);
+  });
+}
+
+async function openCat(c){
+  current=c;
+  document.getElementById("home").style.display="none";
+  document.getElementById("page").style.display="block";
+  document.getElementById("title").innerText=c;
+  loadImages();
+}
+
+function back(){
+  document.getElementById("page").style.display="none";
+  document.getElementById("home").style.display="grid";
+}
+
+function pick(){
+  document.getElementById("file").click();
+}
+
+document.getElementById("file").onchange=async(e)=>{
+  const file=e.target.files[0];
+  if(!file) return;
+
+  const path=current+"/"+Date.now()+"_"+file.name;
+
+  const res=await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`,{
+    method:"POST",
+    headers:{
+      "apikey":API_KEY,
+      "Authorization":"Bearer "+API_KEY,
+      "Content-Type":file.type
+    },
+    body:file
+  });
+
+  if(!res.ok){
+    alert("Upload failed");
+    return;
+  }
+
+  loadImages();
+};
+
+async function loadImages(){
+  const g=document.getElementById("gallery");
+  g.innerHTML="Loading...";
+
+  const res=await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}?prefix=${current}/`,{
+    headers:{
+      "apikey":API_KEY,
+      "Authorization":"Bearer "+API_KEY
+    }
+  });
+
+  const files=await res.json();
+  g.innerHTML="";
+
+  files.forEach(f=>{
+    const url=`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${current}/${f.name}`;
+    const img=document.createElement("img");
+    img.src=url;
+    img.oncontextmenu=(e)=>{e.preventDefault();del(f.name)};
+    g.appendChild(img);
+  });
+}
+
+async function del(name){
+  if(!confirm("Delete image?")) return;
+
+  await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${current}/${name}`,{
+    method:"DELETE",
+    headers:{
+      "apikey":API_KEY,
+      "Authorization":"Bearer "+API_KEY
+    }
+  });
+
+  loadImages();
+}
+
+home();
+</script>
+</body>
+</html>
